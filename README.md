@@ -5,6 +5,12 @@ The library for parsing environ configuration and creating nested configuration 
 * `EnvConfigParser` is designed to parse environment variables and a `.env` file to create a structured configuration.
 * `EnvConfig` takes the parsed environment variables (a dictionary) and creates an object with attributes matching the keys.
 
+### Installation
+
+```python 
+pip install environ-composition
+```
+
 ### Import
 
 ```python 
@@ -19,7 +25,7 @@ config = EnvConfigParser(dotenv_path='path_to/.env', separator='__').parse()
 
 In `EnvConfigParser` each environment variable name goes into a lowercase attribute of `EnvConfig` instance. 
 
-Adding some separator (i.e. double underscores "__") to the variable name adds a level of nesting to the config.
+Adding some separator (i.g. double underscores "__") to the variable name adds a level of nesting to the config.
 
 ```
 VAR1=value1

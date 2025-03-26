@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "environ-composition"
+version = "1.0.0"
+authors = [
+    {name = "Aleksei Fomenko", email = "fomenko_ai@proton.me"},
+]
+description = "The library for creating nested environ configuration through composition"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+]
+
+[project.urls]
+Homepage = "https://github.com/fomenko-ai/environ-composition"
