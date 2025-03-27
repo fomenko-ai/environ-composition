@@ -92,3 +92,5 @@ ENV/
 .mypy_cache/
 
 /cache
+
+requirements.txt

@@ -61,3 +61,48 @@ config = parser.parse(template)
 The structure and nesting levels of the template must match the names in the environment variable.
 
 Mismatched names of attributes and private attributes in the template are not updated.
+
+### Parsing values
+
+The `ast` library and the `literal_eval` function are used for parsing string values. 
+
+Standard data types are available: str, int, float, bool, list, tuple, set, dict, etc.
+
+```
+VAR1=['string', 1, 1.01, True]
+VAR2__NESTED_VAR1={"string": 1}
+```
+
+For variables with null string values ('', 'None', 'null'), `None` is assigned.
+
+```
+VAR1=
+VAR2=None
+VAR3=null
+```
+
+The `use_literal_eval` flag in the `parse` method determines to use or not parsing.
+
+### Type validation
+
+If there is a type annotation for __class__ attributes, the parser validates the assigned values.
+
+If there is a type annotation for __instance__ attributes, the parser does not validate.
+
+Validation is not applied to nested config instances.
+
+```python 
+class NestedTemplate:
+    nested_var1: str = None
+
+class Template:
+    var1: str = None
+    var2: int = None
+    var3: NestedTemplate = NestedTemplate() # it will not be validated
+
+    def __init__(self):
+        self.var4: int = None  # it will not be validated
+        self.var5: NestedTemplate = NestedTemplate() # it will not be validated
+```
+
+The `use_type_validation` flag in the `parse` method determines to use or not type validation. Validation only works if `use_literal_eval = True`.

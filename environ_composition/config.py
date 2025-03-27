@@ -19,6 +19,7 @@ class EnvConfig:
     def _create_attrs(self):
         for key, value in self.env_vars.items():
             key = key.lower()
+            value = value if value not in ['', 'None', 'null'] else None
             if isinstance(value, dict):
                 setattr(self, key, EnvConfig(value))
             else:
