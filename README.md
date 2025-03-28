@@ -87,22 +87,26 @@ The `use_literal_eval` flag in the `parse` method determines to use or not parsi
 
 If there is a type annotation for __class__ attributes, the parser validates the assigned values.
 
-If there is a type annotation for __instance__ attributes, the parser does not validate.
+If there is a type annotation for __instance__ attributes, the parser does not validate. If an annotation is specified in the class attributes, the parser will validate the instance attribute.
 
 Validation is not applied to nested config instances.
 
 ```python 
 class NestedTemplate:
     nested_var1: str = None
+    
+    def __init__(self):
+        self.nested_var2 = None # it will not be validated
 
 class Template:
     var1: str = None
     var2: int = None
     var3: NestedTemplate = NestedTemplate() # it will not be validated
-
+    var4: bool
+    
     def __init__(self):
-        self.var4: int = None  # it will not be validated
-        self.var5: NestedTemplate = NestedTemplate() # it will not be validated
+        self.var4 = None  
+        self.var5 = NestedTemplate() # it will not be validated
 ```
 
 The `use_type_validation` flag in the `parse` method determines to use or not type validation. Validation only works if `use_literal_eval = True`.

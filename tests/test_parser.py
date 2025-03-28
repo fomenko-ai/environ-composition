@@ -11,6 +11,28 @@ class TestEnvConfigParser(unittest.TestCase):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.dotenv_file = os.path.join(self.temp_dir.name, ".env")
 
+        self.test_data_with_annotation = [
+            (str, 'string', 'init_string', 'nested_string', 'nested_init_string'),
+            (int, 1, 2, 3, 4),
+            (float, 1.01, 1.02, 1.03, 1.04),
+            (bool, True, False, True, False),
+            (list, ['string', 1, 1.01, True], ['init_string', 2, 1.02, False], ['nested_string', 3, 1.03, True], ['nested_init_string', 4, 1.04, False]),
+            (tuple, ('string', 1, 1.01, True), ('init_string', 2, 1.02, False), ('nested_string', 3, 1.03, True), ('nested_init_string', 4, 1.04, False)),
+            (set, {'string', 1, 1.01, True}, {'init_string', 2, 1.02, False}, {'nested_string', 3, 1.03, True}, {'nested_init_string', 4, 1.04, False}),
+            (dict, {'string': 1}, {'init_string': 2}, {'nested_string': 3}, {'nested_init_string': 4})
+        ]
+
+        self.test_data_with_incorrect_annotation = [
+            (dict, 'string', 'init_string', 'nested_string', 'nested_init_string'),
+            (int, 1.01, 1.02, 1.03, 1.04),
+            (float, 1, 2, 3, 4),
+            (int, True, False, True, False),
+            (bool, ['string', 1, 1.01, True], ['init_string', 2, 1.02, False], ['nested_string', 3, 1.03, True], ['nested_init_string', 4, 1.04, False]),
+            (list, ('string', 1, 1.01, True), ('init_string', 2, 1.02, False), ('nested_string', 3, 1.03, True), ('nested_init_string', 4, 1.04, False)),
+            (tuple, {'string', 1, 1.01, True}, {'init_string', 2, 1.02, False}, {'nested_string', 3, 1.03, True}, {'nested_init_string', 4, 1.04, False}),
+            (set, {'string': 1}, {'init_string': 2}, {'nested_string': 3}, {'nested_init_string': 4})
+        ]
+
     def tearDown(self):
         self.temp_dir.cleanup()
         for key in [
@@ -57,20 +79,9 @@ class TestEnvConfigParser(unittest.TestCase):
             parser.parse(use_environ=False)
 
     def test_parsing_with_annotations(self):
-        test_data = [
-            (str, 'string', 'init_string', 'nested_string', 'nested_init_string'),
-            (int, 1, 2, 3, 4),
-            (float, 1.01, 1.02, 1.03, 1.04),
-            (bool, True, False, True, False),
-            (list, ['string', 1, 1.01, True], ['init_string', 2, 1.02, False], ['nested_string', 3, 1.03, True], ['nested_init_string', 4, 1.04, False]),
-            (tuple, ('string', 1, 1.01, True), ('init_string', 2, 1.02, False), ('nested_string', 3, 1.03, True), ('nested_init_string', 4, 1.04, False)),
-            (set, {'string', 1, 1.01, True}, {'init_string', 2, 1.02, False}, {'nested_string', 3, 1.03, True}, {'nested_init_string', 4, 1.04, False}),
-            (dict, {'string': 1}, {'init_string': 2}, {'nested_string': 3}, {'nested_init_string': 4})
-        ]
-
         parser = EnvConfigParser()
 
-        for _type, var, init_var, nested_var, nested_init_var in test_data:
+        for _type, var, init_var, nested_var, nested_init_var in self.test_data_with_annotation:
             os.environ["VAR"] = str(var)
             os.environ["TEMPLATE_VAR__NESTED_VAR"] = str(nested_var)
             os.environ["TEMPLATE_VAR__NESTED_INIT_VAR"] = str(nested_init_var)
@@ -104,21 +115,53 @@ class TestEnvConfigParser(unittest.TestCase):
             self.assertEqual(config.init_template_var.nested_var, nested_var)
             self.assertEqual(config.init_template_var.nested_init_var, nested_init_var)
 
-    def test_parsing_with_type_error(self):
-        test_data = [
-            (dict, 'string', 'init_string', 'nested_string', 'nested_init_string'),
-            (str, 1, 2, 3, 4),
-            (int, 1.01, 1.02, 1.03, 1.04),
-            (float, True, False, True, False),
-            (bool, ['string', 1, 1.01, True], ['init_string', 2, 1.02, False], ['nested_string', 3, 1.03, True], ['nested_init_string', 4, 1.04, False]),
-            (list, ('string', 1, 1.01, True), ('init_string', 2, 1.02, False), ('nested_string', 3, 1.03, True), ('nested_init_string', 4, 1.04, False)),
-            (tuple, {'string', 1, 1.01, True}, {'init_string', 2, 1.02, False}, {'nested_string', 3, 1.03, True}, {'nested_init_string', 4, 1.04, False}),
-            (set, {'string': 1}, {'init_string': 2}, {'nested_string': 3}, {'nested_init_string': 4})
-        ]
-
+    def test_parsing_with_str_annotation(self):
         parser = EnvConfigParser()
 
-        for _type, var, init_var, nested_var, nested_init_var in test_data:
+        for _, var, init_var, nested_var, nested_init_var in self.test_data_with_annotation:
+            _type = str
+
+            os.environ["VAR"] = str(var)
+            os.environ["TEMPLATE_VAR__NESTED_VAR"] = str(nested_var)
+            os.environ["TEMPLATE_VAR__NESTED_INIT_VAR"] = str(nested_init_var)
+
+            os.environ["INIT_VAR"] = str(init_var)
+            os.environ["INIT_TEMPLATE_VAR__NESTED_VAR"] = str(nested_var)
+            os.environ["INIT_TEMPLATE_VAR__NESTED_INIT_VAR"] = str(nested_init_var)
+
+            class NestedTemplate:
+                nested_var: _type = None
+
+                def __init__(self):
+                    self.nested_init_var: _type = None
+
+            class Template:
+                var: _type = None
+                template_var: NestedTemplate = NestedTemplate()
+
+                def __init__(self):
+                    self.init_var: _type = None
+                    self.init_template_var: NestedTemplate = NestedTemplate()
+
+            template = Template()
+            config = parser.parse(template)
+
+            # It shows that with string annotation, conversion from
+            # string values does not occur, validation does not actually work.
+            # The conversion takes place for the values of init variables.
+
+            self.assertEqual(config.var, str(var))
+            self.assertEqual(config.template_var.nested_var, str(nested_var))
+            self.assertEqual(config.template_var.nested_init_var, nested_init_var)
+
+            self.assertEqual(config.init_var, init_var)
+            self.assertEqual(config.init_template_var.nested_var, str(nested_var))
+            self.assertEqual(config.init_template_var.nested_init_var, nested_init_var)
+
+    def test_parsing_with_type_error(self):
+        parser = EnvConfigParser()
+
+        for _type, var, init_var, nested_var, nested_init_var in self.test_data_with_incorrect_annotation:
             os.environ["VAR"] = str(var)
             os.environ["TEMPLATE_VAR__NESTED_VAR"] = str(nested_var)
             os.environ["TEMPLATE_VAR__NESTED_INIT_VAR"] = str(nested_init_var)
@@ -147,20 +190,9 @@ class TestEnvConfigParser(unittest.TestCase):
                 parser.parse(template)
 
     def test_parsing_with_init_var_annotations(self):
-        test_data = [
-            (dict, 'string', 'init_string', 'nested_string', 'nested_init_string'),
-            (str, 1, 2, 3, 4),
-            (int, 1.01, 1.02, 1.03, 1.04),
-            (float, True, False, True, False),
-            (bool, ['string', 1, 1.01, True], ['init_string', 2, 1.02, False], ['nested_string', 3, 1.03, True], ['nested_init_string', 4, 1.04, False]),
-            (list, ('string', 1, 1.01, True), ('init_string', 2, 1.02, False), ('nested_string', 3, 1.03, True), ('nested_init_string', 4, 1.04, False)),
-            (tuple, {'string', 1, 1.01, True}, {'init_string', 2, 1.02, False}, {'nested_string', 3, 1.03, True}, {'nested_init_string', 4, 1.04, False}),
-            (set, {'string': 1}, {'init_string': 2}, {'nested_string': 3}, {'nested_init_string': 4})
-        ]
-
         parser = EnvConfigParser()
 
-        for _type, var, init_var, nested_var, nested_init_var in test_data:
+        for _type, var, init_var, nested_var, nested_init_var in self.test_data_with_incorrect_annotation:
             os.environ["VAR"] = str(var)
             os.environ["TEMPLATE_VAR__NESTED_VAR"] = str(nested_var)
             os.environ["TEMPLATE_VAR__NESTED_INIT_VAR"] = str(nested_init_var)
@@ -186,6 +218,9 @@ class TestEnvConfigParser(unittest.TestCase):
             template = Template()
             config = parser.parse(template)
 
+            # It shows that with instance variable annotation, conversion
+            # string values takes place, but validation does not actually work.
+
             self.assertEqual(config.var, var)
             self.assertEqual(config.template_var.nested_var, nested_var)
             self.assertEqual(config.template_var.nested_init_var, nested_init_var)
@@ -193,6 +228,42 @@ class TestEnvConfigParser(unittest.TestCase):
             self.assertEqual(config.init_var, init_var)
             self.assertEqual(config.init_template_var.nested_var, nested_var)
             self.assertEqual(config.init_template_var.nested_init_var, nested_init_var)
+
+    def test_parsing_with_additional_class_annotations(self):
+        parser = EnvConfigParser()
+
+        for _type, var, init_var, nested_var, nested_init_var in self.test_data_with_incorrect_annotation:
+            os.environ["VAR"] = str(var)
+            os.environ["TEMPLATE_VAR__NESTED_VAR"] = str(nested_var)
+            os.environ["TEMPLATE_VAR__NESTED_INIT_VAR"] = str(nested_init_var)
+
+            os.environ["INIT_VAR"] = str(init_var)
+            os.environ["INIT_TEMPLATE_VAR__NESTED_VAR"] = str(nested_var)
+            os.environ["INIT_TEMPLATE_VAR__NESTED_INIT_VAR"] = str(nested_init_var)
+
+            class NestedTemplate:
+                nested_var = None
+                nested_init_var: _type
+
+                def __init__(self):
+                    self.nested_init_var = None
+
+            class Template:
+                var = None
+                template_var = NestedTemplate()
+                init_var: _type
+
+                def __init__(self):
+                    self.init_var = None
+                    self.init_template_var = NestedTemplate()
+
+            template = Template()
+
+            # It shows that with additional class annotation, conversion
+            # string values takes place and validation works.
+
+            with self.assertRaises(TypeError):
+                parser.parse(template)
 
     def test_incorrect_config(self):
         os.environ["VAR"] = "var"

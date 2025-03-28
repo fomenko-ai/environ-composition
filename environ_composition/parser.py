@@ -73,6 +73,14 @@ class EnvConfigParser:
             self._add_to_config(config[key_parts[0]], key_parts[1:], value)
 
     @staticmethod
+    def _has_str_annotation(annotations: dict,  key: str) -> bool:
+        ann = annotations.get(key)
+        if ann is str:
+            return True
+        else:
+            return False
+
+    @staticmethod
     def _get_literal_value(value: str) -> Any:
         try:
             value = ast.literal_eval(value)
@@ -82,8 +90,8 @@ class EnvConfigParser:
             return value
 
     @staticmethod
-    def _validate_type(annotations, key, value):
-        if key in annotations and not isinstance(value, annotations.get(key)):
+    def _validate_type(annotations: dict, key: str, value):
+        if key in annotations and type(value) is not annotations.get(key):
             raise TypeError(
                 f"Value type of key '{key}' does not match "
                 "variable annotation."
@@ -96,7 +104,7 @@ class EnvConfigParser:
         use_literal_eval: bool,
         use_type_validation: bool
     ) -> Any:
-        annotations = template.__class__.__annotations__
+        annotations: dict = template.__class__.__annotations__
 
         attrs_dict = {
             key: getattr(template, key) for key in dir(template)
@@ -114,7 +122,11 @@ class EnvConfigParser:
             if hasattr(env_config, key):
                 e_value = getattr(env_config, key)
 
-                if not hasattr(e_value, '__dict__') and use_literal_eval:
+                if (
+                    not self._has_str_annotation(annotations, key)
+                    and not hasattr(e_value, '__dict__')
+                    and use_literal_eval
+                ):
                     e_value = self._get_literal_value(e_value)
 
                 if not (

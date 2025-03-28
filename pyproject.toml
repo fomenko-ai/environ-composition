@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "environ-composition"
-version = "1.1.0"
+version = "1.1.1"
 authors = [
     {name = "Aleksei Fomenko", email = "fomenko_ai@proton.me"},
 ]
